@@ -6,6 +6,44 @@ import ProjectCard from "./ProjectCard";
 const FeaturedProjects = () => {
   const [featuredProjects, setFeaturedProjects] = useState(getFeaturedProjects());
   
+  // Enhance projects with better images
+  useEffect(() => {
+    const enhancedProjects = featuredProjects.map(project => {
+      let enhancedImage;
+      
+      // Assign relevant high-quality images based on category
+      switch(project.category) {
+        case "Web Development":
+          enhancedImage = "/project-web.jpg";
+          break;
+        case "Design":
+          enhancedImage = "/project-design.jpg";
+          break;
+        case "Writing":
+          enhancedImage = "/project-writing.jpg";
+          break;
+        case "Video":
+          enhancedImage = "/project-video.jpg";
+          break;
+        case "SEO":
+          enhancedImage = "/project-seo.jpg";
+          break;
+        case "Mobile Development":
+          enhancedImage = "/project-mobile.jpg";
+          break;
+        default:
+          enhancedImage = project.image;
+      }
+      
+      return {
+        ...project,
+        image: enhancedImage
+      };
+    });
+    
+    setFeaturedProjects(enhancedProjects);
+  }, []);
+  
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">

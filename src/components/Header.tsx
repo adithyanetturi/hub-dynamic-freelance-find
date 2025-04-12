@@ -2,10 +2,28 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -27,14 +45,46 @@ const Header = () => {
             <Link to="/freelancer" className="text-gray-700 hover:text-brand-600 font-medium">
               Become a Freelancer
             </Link>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" asChild>
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/signup">Sign up</Link>
-              </Button>
-            </div>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar>
+                      <AvatarFallback>
+                        {user.email?.substring(0, 2).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Link to="/profile" className="flex items-center w-full">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/post" className="flex items-center w-full">
+                      Post Project
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" asChild>
+                  <Link to="/auth">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/auth?tab=register">Sign up</Link>
+                </Button>
+              </div>
+            )}
           </nav>
 
           {/* Mobile menu button */}
@@ -69,14 +119,43 @@ const Header = () => {
             >
               Become a Freelancer
             </Link>
-            <div className="flex flex-col space-y-2">
-              <Button variant="outline" asChild className="w-full">
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button asChild className="w-full">
-                <Link to="/signup">Sign up</Link>
-              </Button>
-            </div>
+            {user ? (
+              <>
+                <Link 
+                  to="/profile" 
+                  className="block text-gray-700 hover:text-brand-600 font-medium py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Profile
+                </Link>
+                <Link 
+                  to="/post" 
+                  className="block text-gray-700 hover:text-brand-600 font-medium py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Post Project
+                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    handleSignOut();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col space-y-2">
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                </Button>
+                <Button asChild className="w-full">
+                  <Link to="/auth?tab=register" onClick={() => setIsMenuOpen(false)}>Sign up</Link>
+                </Button>
+              </div>
+            )}
           </nav>
         )}
       </div>

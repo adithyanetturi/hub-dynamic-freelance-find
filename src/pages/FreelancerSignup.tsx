@@ -52,7 +52,7 @@ const FreelancerSignup = () => {
             <div className="text-center">
               <p className="text-xl mb-6">Ready to start your freelance journey?</p>
               <Button size="lg" asChild>
-                <Link to="/signup">Sign Up Now</Link>
+                <Link to="/auth?tab=register">Sign Up Now</Link>
               </Button>
             </div>
           </div>

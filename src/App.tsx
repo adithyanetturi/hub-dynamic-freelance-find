@@ -16,6 +16,8 @@ import FreelancerSignup from "./pages/FreelancerSignup";
 import PostProject from "./pages/PostProject";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import FreelancerDashboard from "./pages/FreelancerDashboard";
+import ClientDashboard from "./pages/ClientDashboard";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,9 @@ const App = () => (
               <Route path="/freelancer" element={<FreelancerSignup />} />
               <Route path="/post" element={<PostProject />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard/freelancer" element={<FreelancerDashboard />} />
+              <Route path="/dashboard/client" element={<ClientDashboard />} />
+              <Route path="/dashboard" element={<ClientDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Chatbot />

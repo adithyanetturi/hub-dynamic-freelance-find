@@ -4,12 +4,71 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchFilters from "@/components/SearchFilters";
 import ProjectCard from "@/components/ProjectCard";
-import { Project, projects } from "@/data/dummyData";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  location: string;
+  client_id: string;
+  freelancer_id: string | null;
+  status: string;
+  created_at: string;
+  image?: string;
+}
+
+const aiProjectImages = {
+  "Web Development": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=800&q=80",
+  "Mobile Development": "https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&w=800&q=80", 
+  "AI Development": "https://images.unsplash.com/photo-1677442135196-8003c00c5722?auto=format&fit=crop&w=800&q=80",
+  "Data Science": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+  "Machine Learning": "https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=800&q=80",
+  "Blockchain Development": "https://images.unsplash.com/photo-1644143379190-08a5f055de1d?auto=format&fit=crop&w=800&q=80",
+  "Graphic Design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80",
+  "Content Writing": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
+  "Digital Marketing": "https://images.unsplash.com/photo-1533750516509-a7ce7d8bbb5a?auto=format&fit=crop&w=800&q=80",
+  "SEO": "https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?auto=format&fit=crop&w=800&q=80",
+  "Video Editing": "https://images.unsplash.com/photo-1574717024453-e599f7994a00?auto=format&fit=crop&w=800&q=80",
+  "default": "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&w=800&q=80"
+};
 
 const BrowseProjects = () => {
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(projects);
-  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("status", "open")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        // Add appropriate images based on category
+        const projectsWithImages = data.map((project: Project) => ({
+          ...project,
+          image: aiProjectImages[project.category as keyof typeof aiProjectImages] || aiProjectImages.default
+        }));
+
+        setProjects(projectsWithImages);
+        setFilteredProjects(projectsWithImages);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const handleSearch = (filters: {
     query: string;
@@ -19,7 +78,7 @@ const BrowseProjects = () => {
   }) => {
     setLoading(true);
     
-    // Simulate API call with a delay
+    // Filter based on search criteria
     setTimeout(() => {
       const filtered = projects.filter(project => {
         const matchesQuery = 

@@ -1,9 +1,10 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,14 +16,43 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+        setUserProfile(data);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
       await signOut();
+      navigate("/");
     } catch (error) {
       console.error("Error signing out:", error);
     }
+  };
+
+  const getDashboardLink = () => {
+    if (!userProfile) return "/dashboard";
+    return userProfile.user_type === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client";
   };
 
   return (
@@ -42,32 +72,38 @@ const Header = () => {
             <Link to="/browse" className="text-gray-700 hover:text-brand-600 font-medium">
               Browse Projects
             </Link>
-            <Link to="/freelancer" className="text-gray-700 hover:text-brand-600 font-medium">
-              Become a Freelancer
-            </Link>
+            {!user && (
+              <Link to="/freelancer" className="text-gray-700 hover:text-brand-600 font-medium">
+                Become a Freelancer
+              </Link>
+            )}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar>
                       <AvatarFallback>
-                        {user.email?.substring(0, 2).toUpperCase() || "U"}
+                        {userProfile?.name
+                          ? userProfile.name.charAt(0).toUpperCase()
+                          : user.email?.substring(0, 2).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <Link to="/profile" className="flex items-center w-full">
+                  <DropdownMenuItem asChild>
+                    <Link to={getDashboardLink()} className="flex items-center w-full">
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/post" className="flex items-center w-full">
-                      Post Project
-                    </Link>
-                  </DropdownMenuItem>
+                  {userProfile?.user_type === "client" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/post" className="flex items-center w-full">
+                        Post Project
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -112,29 +148,33 @@ const Header = () => {
             >
               Browse Projects
             </Link>
-            <Link 
-              to="/freelancer" 
-              className="block text-gray-700 hover:text-brand-600 font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Become a Freelancer
-            </Link>
+            {!user && (
+              <Link 
+                to="/freelancer" 
+                className="block text-gray-700 hover:text-brand-600 font-medium py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Become a Freelancer
+              </Link>
+            )}
             {user ? (
               <>
                 <Link 
-                  to="/profile" 
+                  to={getDashboardLink()}
                   className="block text-gray-700 hover:text-brand-600 font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  My Profile
+                  Dashboard
                 </Link>
-                <Link 
-                  to="/post" 
-                  className="block text-gray-700 hover:text-brand-600 font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Post Project
-                </Link>
+                {userProfile?.user_type === "client" && (
+                  <Link 
+                    to="/post" 
+                    className="block text-gray-700 hover:text-brand-600 font-medium py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Post Project
+                  </Link>
+                )}
                 <Button 
                   variant="outline" 
                   className="w-full"

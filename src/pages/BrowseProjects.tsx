@@ -18,7 +18,7 @@ interface Project {
   freelancer_id: string | null;
   status: string;
   created_at: string;
-  image?: string;
+  image: string; // Changed from optional to required
   createdAt: Date; // Added this field to match the dummyData.ts Project interface
 }
 

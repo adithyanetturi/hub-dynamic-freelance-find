@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +77,7 @@ const Chatbot = () => {
             key={index}
             className={`flex ${
               msg.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            } animate-fade-in`}
           >
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
@@ -139,7 +140,7 @@ const Chatbot = () => {
       {/* Chat panel - Dialog for desktop / Drawer for mobile */}
       {isMobile ? (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent className="h-[80vh]">
+          <DrawerContent className="h-[90vh]"> {/* Increased height from 80vh to 90vh */}
             <DrawerHeader className="border-b bg-brand-600 text-white">
               <DrawerTitle>FreelanceHub Assistant</DrawerTitle>
             </DrawerHeader>
@@ -150,7 +151,7 @@ const Chatbot = () => {
         </Drawer>
       ) : (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0">
+          <DialogContent className="sm:max-w-[500px] h-[700px] flex flex-col p-0"> {/* Increased width from 425px to 500px and height from 600px to 700px */}
             <DialogHeader className="p-4 border-b bg-brand-600 text-white rounded-t-lg">
               <DialogTitle>FreelanceHub Assistant</DialogTitle>
             </DialogHeader>

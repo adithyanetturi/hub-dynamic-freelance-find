@@ -15,9 +15,39 @@ serve(async (req) => {
   try {
     const { query, history = [] } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not found');
+    }
+
+    // Extract location references from the query
+    const locationMatches = query.match(/near\s+([^?.,]+)|in\s+([^?.,]+)|at\s+([^?.,]+)|around\s+([^?.,]+)/i);
+    let locationContext = "";
+
+    // If location is mentioned, use Google Maps API to get information
+    if (locationMatches && googleMapsApiKey) {
+      // Find the first non-undefined group (the actual location)
+      const location = locationMatches.slice(1).find(match => match !== undefined);
+      
+      if (location) {
+        try {
+          // Use Google Maps Places API to get location info
+          const placesResponse = await fetch(
+            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(location)}&inputtype=textquery&fields=name,formatted_address&key=${googleMapsApiKey}`
+          );
+          
+          const placesData = await placesResponse.json();
+          
+          if (placesData.candidates && placesData.candidates.length > 0) {
+            const place = placesData.candidates[0];
+            locationContext = `The user is asking about ${place.name}, located at ${place.formatted_address}. `;
+            console.log("Location context added:", locationContext);
+          }
+        } catch (mapError) {
+          console.error("Error fetching location data:", mapError);
+        }
+      }
     }
 
     // Prepare the messages including context about the site
@@ -25,6 +55,7 @@ serve(async (req) => {
       {
         role: "system",
         content: `You are a helpful assistant for FreelanceHub, a platform connecting clients with freelancers. 
+        ${locationContext}
         
         Common FAQs:
         1. How do I create an account? - You can create an account by clicking on the "Sign Up" button in the top right corner of the homepage and filling out the registration form.
@@ -62,6 +93,7 @@ serve(async (req) => {
     // Return the assistant's response
     return new Response(JSON.stringify({
       answer: data.choices[0].message.content,
+      locationDetected: !!locationContext
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

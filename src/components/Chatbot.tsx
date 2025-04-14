@@ -2,12 +2,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  hasLocationContext?: boolean;
 }
 
 const Chatbot = () => {
@@ -42,7 +43,11 @@ const Chatbot = () => {
 
       if (error) throw new Error(error.message);
       
-      setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: data.answer,
+        hasLocationContext: data.locationDetected 
+      }]);
     } catch (error) {
       console.error('Error getting response:', error);
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
@@ -72,7 +77,7 @@ const Chatbot = () => {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 w-80 sm:w-96 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col z-50 border border-gray-200">
+        <div className="fixed bottom-20 right-4 w-80 sm:w-96 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col z-50 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
           {/* Header */}
           <div className="p-4 border-b bg-brand-600 text-white rounded-t-lg flex justify-between items-center">
             <h3 className="font-semibold">FreelanceHub Support</h3>
@@ -99,16 +104,22 @@ const Chatbot = () => {
                   className={`max-w-[80%] rounded-lg p-3 ${
                     msg.role === "user"
                       ? "bg-brand-100 text-gray-800"
-                      : "bg-gray-100 text-gray-800"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
                   }`}
                 >
+                  {msg.hasLocationContext && (
+                    <div className="flex items-center text-sm text-brand-600 mb-1">
+                      <MapPin size={14} className="mr-1" />
+                      <span>Location-enhanced response</span>
+                    </div>
+                  )}
                   {msg.content}
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-lg p-3 bg-gray-100 text-gray-800">
+                <div className="max-w-[80%] rounded-lg p-3 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
               </div>

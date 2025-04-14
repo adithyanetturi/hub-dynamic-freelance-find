@@ -21,28 +21,29 @@ serve(async (req) => {
       throw new Error('OpenAI API key not found');
     }
 
-    // Extract location references from the query
-    const locationMatches = query.match(/near\s+([^?.,]+)|in\s+([^?.,]+)|at\s+([^?.,]+)|around\s+([^?.,]+)/i);
+    // Enhanced location detection with more comprehensive regex
+    const locationMatches = query.match(/near\s+([^?.,]+)|in\s+([^?.,]+)|at\s+([^?.,]+)|around\s+([^?.,]+)|located\s+in\s+([^?.,]+)/i);
     let locationContext = "";
 
-    // If location is mentioned, use Google Maps API to get information
+    // If location is mentioned and Google Maps API key is available
     if (locationMatches && googleMapsApiKey) {
       // Find the first non-undefined group (the actual location)
       const location = locationMatches.slice(1).find(match => match !== undefined);
       
       if (location) {
         try {
-          // Use Google Maps Places API to get location info
+          // Use Google Maps Places API to get detailed location info
           const placesResponse = await fetch(
-            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(location)}&inputtype=textquery&fields=name,formatted_address&key=${googleMapsApiKey}`
+            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(location)}&inputtype=textquery&fields=name,formatted_address,type&key=${googleMapsApiKey}`
           );
           
           const placesData = await placesResponse.json();
           
           if (placesData.candidates && placesData.candidates.length > 0) {
             const place = placesData.candidates[0];
-            locationContext = `The user is asking about ${place.name}, located at ${place.formatted_address}. `;
-            console.log("Location context added:", locationContext);
+            locationContext = `The query is about ${place.name}, located at ${place.formatted_address}. 
+            Place type: ${place.types ? place.types.join(', ') : 'Not specified'}. `;
+            console.log("Detailed location context:", locationContext);
           }
         } catch (mapError) {
           console.error("Error fetching location data:", mapError);
@@ -50,7 +51,7 @@ serve(async (req) => {
       }
     }
 
-    // Prepare the messages including context about the site
+    // Prepare the messages including context about the site and location
     const messages = [
       {
         role: "system",
@@ -63,9 +64,6 @@ serve(async (req) => {
         3. What are the fees? - FreelanceHub charges a 10% fee on all completed projects.
         4. How does payment work? - Clients fund projects upfront into a secure escrow, and funds are released to freelancers once the work is approved.
         5. How does the dynamic pricing system work? - Our AI analyzes market rates and adjusts project prices based on demand, skills required, and timeline to ensure fair pricing.
-        6. What happens if I'm not satisfied with the work? - We offer a dispute resolution process where a mediator will review the case and make a determination.
-        7. Can I hire a team of freelancers? - Yes, you can hire multiple freelancers or look for agencies that provide team-based solutions.
-        8. How do I communicate with freelancers? - After accepting a proposal, you'll gain access to our messaging system to communicate directly with the freelancer.
         
         Keep your answers concise, friendly and helpful.`
       },
@@ -90,7 +88,7 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    // Return the assistant's response
+    // Return the assistant's response with location context flag
     return new Response(JSON.stringify({
       answer: data.choices[0].message.content,
       locationDetected: !!locationContext
@@ -105,3 +103,4 @@ serve(async (req) => {
     });
   }
 });
+

@@ -19,6 +19,7 @@ interface Project {
   status: string;
   created_at: string;
   image?: string;
+  createdAt: Date; // Added this field to match the dummyData.ts Project interface
 }
 
 const aiProjectImages = {
@@ -52,10 +53,11 @@ const BrowseProjects = () => {
 
         if (error) throw error;
 
-        // Add appropriate images based on category
-        const projectsWithImages = data.map((project: Project) => ({
+        // Add appropriate images based on category and convert created_at to createdAt
+        const projectsWithImages = data.map((project: any) => ({
           ...project,
-          image: aiProjectImages[project.category as keyof typeof aiProjectImages] || aiProjectImages.default
+          image: aiProjectImages[project.category as keyof typeof aiProjectImages] || aiProjectImages.default,
+          createdAt: new Date(project.created_at) // Convert created_at string to Date object for createdAt
         }));
 
         setProjects(projectsWithImages);
